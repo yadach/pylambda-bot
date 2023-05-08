@@ -18,15 +18,15 @@ jobs:
     strategy:
       max-parallel: 10
       matrix:
-        python-version: [3.7]
-        poetry-version: [1.2.2]
+        python-version: [3.9]
+        poetry-version: [1.4.2]
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'
-      - uses: abatilo/actions-poetry@v2.0.0
+      - uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install original package
