@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: 0 0 * * 1
+
+jobs:
+  linter_and_test:
+    runs-on: ubuntu-22.04
+    environment:
+      name: test
+    strategy:
+      max-parallel: 10
+      matrix:
+        python-version: [3.7]
+        poetry-version: [1.2.2]
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Install original package
+        run: poetry install -n
+      - name: Run isort
+        run: poetry run isort . --check-only
+      - name: Run Black
+        run: poetry run black . --check --diff
+      - name: Run flake8
+        run: poetry run pflake8
+      - name: Run pytest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: poetry run pytest tests --log-cli-level=INFO
