@@ -39,11 +39,13 @@ class Slack(BaseMessageService):
         # parse info
         self.channel = body["event"]["channel"]
         self.ts = body["event"]["ts"]
+        self.bot_user_id = body["authorizations"][0]["user_id"]
+        logger.debug(
+            f"[From Slack] bot_user_id: {self.bot_user_id}, channel: {self.channel}, ts: {self.ts}"
+        )
         # Prepare text
-        text_args = body["event"]["text"].split(" ")
-        self.bot_user_id = text_args[0]
-        input_text = " ".join(text_args[1:])
-
+        input_text = body["event"]["text"]
+        input_text = input_text.replace(f"<@{self.bot_user_id}>", "")
         return input_text
 
     def gen_res(self, body: str):
@@ -71,7 +73,8 @@ class Slack(BaseMessageService):
             res = requests.get(url, headers=self.headers, params=params)
             for msg in res.json()["messages"][:-1]:
                 role = "system" if "bot_id" in msg.keys() else "user"
-                conv_hist += [{"role": role, "content": msg["text"].replace(self.bot_user_id, "")}]
+                _msg = msg["text"].replace(f"<@{self.bot_user_id}>", "")
+                conv_hist += [{"role": role, "content": _msg}]
         return conv_hist
 
     def post(self, message: str = None, in_thread: bool = True) -> requests.models.Response:
